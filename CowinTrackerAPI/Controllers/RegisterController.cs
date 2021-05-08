@@ -69,7 +69,7 @@ namespace CowinTrackerAPI.Controllers
                 {
                     //check whether to run the scan or not
                     var timespan = DateTime.Now - scan.LastRun;
-                    if (timespan.TotalMinutes > 5)
+                    if (timespan.TotalMinutes >= 5)
                     {
                         var centers = await Schedule.GetAllVaccinationCentersAsync(details.DistrictId);
                         var centersWithSlots = Schedule.GetAllVaccinationCentersWithSlotsAvailable(centers);
