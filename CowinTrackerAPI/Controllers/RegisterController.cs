@@ -32,24 +32,57 @@ namespace CowinTrackerAPI.Controllers
         [Route("user-registration")]
         public async Task<ActionResult> RegisterUserAsync([FromBody] UserRegistration details)
         {
-            var result = _context.UserRegistration.Add(details);
-            await _context.SaveChangesAsync();
-            var centers = await Schedule.GetAllVaccinationCentersAsync(result.Entity.DistrictId);
-            var centersWithSlots = Schedule.GetAllVaccinationCentersWithSlotsAvailable(centers);
-            if (centersWithSlots.Count > 0)
+            try
             {
-                Email.SendEmailNotification(result.Entity, centersWithSlots);
+                if (_context.UserRegistration.FirstOrDefault(x => x.Email == details.Email) == null)
+                {
+                    var result = _context.UserRegistration.Add(details);
+                    await _context.SaveChangesAsync();
+                    var centers = await Schedule.GetAllVaccinationCentersAsync(result.Entity.DistrictId);
+                    var centersWithSlots = Schedule.GetAllVaccinationCentersWithSlotsAvailable(centers);
+                    if (centersWithSlots.Count > 0)
+                    {
+                        Email.SendEmailNotification(result.Entity, centersWithSlots);
+                    }
+                    else
+                    {
+                        Email.SendNoSlotNotification(result.Entity);
+                    }
+
+                    var user = _context.UserRegistration.FirstOrDefault(x => x.Email == result.Entity.Email);
+                    var scanResult = await _context.VaccineScan.AddAsync(new VaccineScan()
+                        { Id = 0, RegistrationId = user.Id, LastRun = DateTime.Now });
+                    await _context.SaveChangesAsync();
+                    return Ok(user);
+                }
             }
-            else
+            catch (Exception e)
             {
-                Email.SendNoSlotNotification(result.Entity);
+                
+                return StatusCode(500, new Error() { Status = 208, Message = "Internal Server Error! Please try again later." });
             }
 
-            var user = _context.UserRegistration.FirstOrDefault(x => x.Email == result.Entity.Email);
-            var scanResult = _context.VaccineScan.Add(new VaccineScan()
-                {Id = 0, RegistrationId = user.Id, LastRun = DateTime.Now});
-            await _context.SaveChangesAsync();
-            return Ok(user);
+            return StatusCode(208, new Error() { Status = 208, Message = "Your email is already registered!" });
+        }
+
+        [HttpGet]
+        [Route("unsubscribe/{email}")]
+        public async Task<ActionResult> Unsubscribe(string email)
+        {
+            var detail = _context.UserRegistration.FirstOrDefault(x => x.Email == email);
+            if (detail != null)
+            {
+                var scan = _context.VaccineScan.FirstOrDefault(x => x.RegistrationId == detail.Id);
+                if (scan != null)
+                {
+                    _context.Set<VaccineScan>().Remove(scan);
+                }
+
+                _context.Set<UserRegistration>().Remove(detail);
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok("Thanks for using our vaccine tracker. You have been unsubscribed from email notifications!");
         }
 
         [HttpPost]
@@ -89,5 +122,12 @@ namespace CowinTrackerAPI.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
+    }
+
+    public class Error
+    {
+        public int Status { get; set; }
+        public string Message { get; set; }
+
     }
 }

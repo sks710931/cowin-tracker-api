@@ -85,7 +85,12 @@ namespace CowinTrackerAPI.Helpers
             }
             messageBody += "</tbody>";
             messageBody += "</table>";
-            messageBody += "<a href='https://selfregistration.cowin.gov.in/' style='margin-top: 20px;'>Book your slot, now!</a>";
+            messageBody += "<a href='https://selfregistration.cowin.gov.in/' style='margin-top: 20px;padding: 10px;border-radius: 4px; text-decoration: none; color: white; background-color: rgb(34, 93, 161);'>Book your slot, now!</a>";
+            messageBody += "<p>Once you book the slot, don't forget to let us know or you would keep receiving these notification emails.</p>";
+            messageBody += "<a style='text-decoration: none;' href='https://covid-vaccination-tracker.azurewebsites.net/Register/unsubscribe/"+userDetails.Email+"'>Click on this link to let us know that you have booked your slot.</a>";
+            messageBody += "<p>Take care and stay safe!</p>";
+            messageBody += "<hr>";
+            messageBody += "<span style='color: grey; font-size: 12px;'>Click on this link to unsubscribe from the emails: </span><a style='text-decoration: none; font-size: 13px;' href='https://covid-vaccination-tracker.azurewebsites.net/Register/unsubscribe/" + userDetails.Email + "'>Unsubscribe</a>";
             messageBody += "  </div>";
             return messageBody;
         }
