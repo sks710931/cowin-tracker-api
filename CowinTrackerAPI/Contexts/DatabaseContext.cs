@@ -17,5 +17,7 @@ namespace CowinTrackerAPI.Contexts
 
         public DbSet<UserRegistration> UserRegistration { get; set; }
         public DbSet<VaccineScan> VaccineScan { get; set; }
+        public DbSet<EmailCount> EmailCount { get; set; }
+        public DbSet<Sender> Sender { get; set; }
     }
 }

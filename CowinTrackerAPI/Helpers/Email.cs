@@ -13,39 +13,38 @@ namespace CowinTrackerAPI.Helpers
     {
         static string smtpAddress = "smtp.gmail.com";
         static int portNumber = 587;
-        static bool enableSSL = true;
-        static string emailFromAddress = "vaccine.tracker.notifications@gmail.com"; //Sender Email Address  
+        static bool enableSSL = true; 
         static string password = "Rachel@123#"; //Sender Password 
-        public static void SendEmailNotification(UserRegistration userDetails, List<VaccinationCenter> centers)
+        public static void SendEmailNotification(UserRegistration userDetails, List<VaccinationCenter> centers, string sender)
         {
             using (MailMessage mail = new MailMessage())
             {
-                mail.From = new MailAddress(emailFromAddress);
+                mail.From = new MailAddress(sender);
                 mail.To.Add(userDetails.Email);
                 mail.Subject = "Hi " + userDetails.Name + ", new vaccination slots have opened up!";
                 mail.Body = GetEmailBody(userDetails, centers);
                 mail.IsBodyHtml = true;
                 using (SmtpClient smtp = new SmtpClient(smtpAddress, portNumber))
                 {
-                    smtp.Credentials = new NetworkCredential(emailFromAddress, password);
+                    smtp.Credentials = new NetworkCredential(sender, password);
                     smtp.EnableSsl = enableSSL;
                     smtp.Send(mail);
                 }
             }
         }
 
-        public static void SendNoSlotNotification(UserRegistration user)
+        public static void SendNoSlotNotification(UserRegistration user, string sender)
         {
             using (MailMessage mail = new MailMessage())
             {
-                mail.From = new MailAddress(emailFromAddress);
+                mail.From = new MailAddress(sender);
                 mail.To.Add(user.Email);
                 mail.Subject = "Hi " + user.Name + ", currently there are no vaccine slots available!";
                 mail.Body = "Hi "+ user.Name +", currently there are no vaccine slots available, we will notify you as soon as slots open up";
                 mail.IsBodyHtml = true;
                 using (SmtpClient smtp = new SmtpClient(smtpAddress, portNumber))
                 {
-                    smtp.Credentials = new NetworkCredential(emailFromAddress, password);
+                    smtp.Credentials = new NetworkCredential(sender, password);
                     smtp.EnableSsl = enableSSL;
                     smtp.Send(mail);
                 }

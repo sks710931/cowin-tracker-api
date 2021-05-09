@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CowinTrackerAPI.Contexts;
+using CowinTrackerAPI.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace CowinTrackerAPI
@@ -45,6 +46,7 @@ namespace CowinTrackerAPI
             services.AddControllers();
             services.AddDbContext<DatabaseContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+            services.AddScoped<DatabaseService>();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "CowinTrackerAPI", Version = "v1" });

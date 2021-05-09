@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CowinTrackerAPI.Contexts;
 using CowinTrackerAPI.Helpers;
 using CowinTrackerAPI.Models;
+using CowinTrackerAPI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -16,10 +17,12 @@ namespace CowinTrackerAPI.Controllers
     public class RegisterController : ControllerBase
     {
         private readonly DatabaseContext _context;
+        private readonly DatabaseService _dbService;
 
-        public RegisterController(DatabaseContext context)
+        public RegisterController(DatabaseContext context, DatabaseService dbService)
         {
             _context = context;
+            _dbService = dbService;
         }
         [HttpGet]
         [Route("/test")]
@@ -40,13 +43,23 @@ namespace CowinTrackerAPI.Controllers
                     await _context.SaveChangesAsync();
                     var centers = await Schedule.GetAllVaccinationCentersAsync(result.Entity.DistrictId);
                     var centersWithSlots = Schedule.GetAllVaccinationCentersWithSlotsAvailable(centers);
-                    if (centersWithSlots.Count > 0)
+                    try
                     {
-                        Email.SendEmailNotification(result.Entity, centersWithSlots);
+                        if (centersWithSlots.Count > 0)
+                        {
+                            Email.SendEmailNotification(result.Entity, centersWithSlots, _dbService.GetSender());
+                            await _dbService.IncreaseEmailCount();
+                        }
+                        else
+                        {
+                            Email.SendNoSlotNotification(result.Entity, _dbService.GetSender());
+                            await _dbService.IncreaseEmailCount();
+                        }
                     }
-                    else
+                    catch (Exception e)
                     {
-                        Email.SendNoSlotNotification(result.Entity);
+                        var sender = _dbService.GetSender();
+                        await _dbService.DisableSender(sender);
                     }
 
                     var user = _context.UserRegistration.FirstOrDefault(x => x.Email == result.Entity.Email);
@@ -108,8 +121,17 @@ namespace CowinTrackerAPI.Controllers
                         var centersWithSlots = Schedule.GetAllVaccinationCentersWithSlotsAvailable(centers);
                         if (centersWithSlots.Count > 0)
                         {
-                            Email.SendEmailNotification(details, centersWithSlots);
-                            
+                            try
+                            {
+                                Email.SendEmailNotification(details, centersWithSlots, _dbService.GetSender());
+                                await _dbService.IncreaseEmailCount();
+                            }
+                            catch (Exception e)
+                            {
+                                var sender = _dbService.GetSender();
+                                await _dbService.DisableSender(sender);
+                            }
+
                         }
                         scan.LastRun = DateTime.Now;
 
@@ -120,10 +142,19 @@ namespace CowinTrackerAPI.Controllers
             }
 
             await _context.SaveChangesAsync();
+            await _dbService.ResetSenderStatus();
             return Ok();
+        }
+
+        [HttpGet]
+        [Route("statistics")]
+        public async Task<ActionResult> GetStatistics()
+        {
+            return Ok(await _dbService.GetStatistics());
         }
     }
 
+    
     public class Error
     {
         public int Status { get; set; }
