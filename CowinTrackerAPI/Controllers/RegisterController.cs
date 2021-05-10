@@ -102,20 +102,22 @@ namespace CowinTrackerAPI.Controllers
         [Route("run-vaccine-scan")]
         public async Task<ActionResult> RunVaccineScan()
         {
+            int count = 0;
             //get All previous scans 
             var scans = await _context.Set<VaccineScan>().ToListAsync();
 
             // run scan for each entries
             foreach (var scan in scans)
             {
-                
+                if (count > 75)
+                    break;
                 // get scan user details
                 var details = _context.UserRegistration.FirstOrDefault(x => x.Id == scan.RegistrationId);
                 if (details != null)
                 {
                     //check whether to run the scan or not
                     var timespan = DateTime.Now - scan.LastRun;
-                    if (timespan.TotalMinutes >= 5)
+                    if (timespan.TotalMinutes >= 9)
                     {
                         var centers = await Schedule.GetAllVaccinationCentersAsync(details.DistrictId);
                         var centersWithSlots = Schedule.GetAllVaccinationCentersWithSlotsAvailable(centers);
@@ -134,10 +136,11 @@ namespace CowinTrackerAPI.Controllers
 
                         }
                         scan.LastRun = DateTime.Now;
-
+                        count++;
                     }
                     
                 }
+
                 
             }
 

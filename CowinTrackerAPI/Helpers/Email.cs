@@ -109,7 +109,7 @@ namespace CowinTrackerAPI.Helpers
 
         private static string GetAllVaccinationShots(VaccinationCenter center)
         {
-            int totalShots = 0;
+            decimal totalShots = 0;
             foreach (Session session in center.Sessions)
             {
                 totalShots += session.Available_Capacity;

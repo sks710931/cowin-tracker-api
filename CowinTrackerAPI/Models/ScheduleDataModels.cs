@@ -15,7 +15,7 @@ namespace CowinTrackerAPI.Models
     {
         public string Session_Id { get; set; }
         public string Date { get; set; }
-        public int Available_Capacity { get; set; }
+        public decimal Available_Capacity { get; set; }
         public int Min_Age_Limit { get; set; }
         public string Vaccine { get; set; }
         public string[] Slots { get; set; }
